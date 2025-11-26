@@ -7,8 +7,8 @@ import React, { useEffect } from "react";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 export const StripeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [clientSecret, setClientSecret] = React.useState<string | undefined>(undefined);
 
+  const [secrets, setSecrets] = React.useState<{clientSecret: string, customerSessionClientSecret: string} | null>(null);
   useEffect(() => {
     
     const serverCheckout = async () => {
@@ -21,8 +21,7 @@ export const StripeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
   
         const data = await response.json();
-        
-        setClientSecret(data.clientSecret);
+        setSecrets({ clientSecret: data.clientSecret, customerSessionClientSecret: data.customerSessionClientSecret });
       } catch (error) {
         console.error("Error creating payment intent:", error);
       }
@@ -35,13 +34,14 @@ export const StripeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
 
   const elementsOptions: StripeElementsOptions = {
-    clientSecret,
+    clientSecret: secrets?.clientSecret,
+    customerSessionClientSecret: secrets?.customerSessionClientSecret,
     appearance: {
       theme: 'stripe',
     }
   }
 
-  if (!clientSecret) {
+  if (!secrets) {
     return <div>Loading...</div>;
   }
 
